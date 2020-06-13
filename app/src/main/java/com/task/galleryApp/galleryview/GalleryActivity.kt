@@ -6,9 +6,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import com.task.galleryApp.R
+import com.task.galleryApp.databinding.ActivityGalleryBinding
 import org.koin.android.viewmodel.ext.android.viewModel
 import java.io.File
 
@@ -23,7 +26,9 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_gallery)
+        val binding =
+            DataBindingUtil.setContentView<ActivityGalleryBinding>(this, R.layout.activity_gallery)
+        binding.viewModel = galleryViewModel
         galleryViewModel.setNavigator(this)
     }
 
@@ -39,7 +44,8 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
                     File(Environment.getExternalStorageDirectory(), "temp.jpg")
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f))
                 startActivityForResult(intent, 1)
-            } else if (options[item] == "Choose from Gallery") {
+            }
+            else if (options[item] == "Choose from Gallery") {
                 val intent = Intent(
                     Intent.ACTION_PICK,
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -53,6 +59,7 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
     }
 
     override fun addImage() {
+        Log.d("Abuzar", "In Add Image")
         selectImage()
     }
 }
