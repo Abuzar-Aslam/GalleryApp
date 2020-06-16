@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
@@ -27,6 +28,13 @@
             android:layout_alignParentBottom="true"
             android:onClick="@{viewModel::onAddImageClick}"
             android:text="Add Image" />
+
+        <ProgressBar
+            android:id="@+id/loading"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            app:visible="@{viewModel.showLoading}" />
 
     </RelativeLayout>
 </layout>

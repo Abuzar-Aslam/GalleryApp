@@ -12,6 +12,8 @@ class GalleryViewModel : ViewModel() {
 
     private var galleryNavigator: GalleryNavigator? = null
 
+    var showLoading = true
+
     fun setNavigator(galleryNavigator: GalleryNavigator) {
 
         this.galleryNavigator = galleryNavigator
