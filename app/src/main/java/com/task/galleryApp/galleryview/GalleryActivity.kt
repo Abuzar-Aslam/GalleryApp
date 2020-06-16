@@ -51,12 +51,7 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
     private val galleryViewModel: GalleryViewModel by viewModel()
     // Folder path for Firebase Storage.
 
-    // Creating StorageReference and DatabaseReference object.
-    var storageReference: StorageReference? = null
-    var databaseReference: DatabaseReference? = null
     val Image_Request_Code = 10
-    var progressDialog: ProgressDialog? = null
-    var Database_Path = "images_uploads"
 
     // Creating RecyclerView.
     lateinit var recyclerView: RecyclerView
@@ -64,20 +59,12 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
     // Creating RecyclerView.Adapter.
     lateinit var adapter: GalleryAdapter
 
-
-    // Creating List of ImageUploadInfo class.
-    var list = ArrayList<ImageModel>()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding =
             DataBindingUtil.setContentView<ActivityGalleryBinding>(this, R.layout.activity_gallery)
         binding.viewModel = galleryViewModel
         galleryViewModel.setNavigator(this)
-
-        storageReference = FirebaseStorage.getInstance().getReference();
-        databaseReference = FirebaseDatabase.getInstance().getReference(Database_Path);
-
 
         recyclerView = findViewById(R.id.galleryRecyclerView);
 
@@ -89,7 +76,6 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
 
         galleryViewModel.fetchImages()
     }
-
 
 
     private fun selectImage() {
@@ -108,7 +94,6 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
             } else if (options[item] == "Choose from Gallery") {
                 if (checkReadStoragePermission()) {
                     if (checkWriteStoragePermission()) {
-
                         launchGallery()
                     }
                 }
@@ -193,16 +178,6 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
             Log.d("Abuzar", "onActivityResult URI " + galleryViewModel.FilePathUri.toString())
             try {
                 galleryViewModel.uploadImageToFirebase()
-//                UploadImageFileToFirebaseStorage();
-                // Gvar bitmap: Bitmap =
-                ////                    MediaStore.Images.Media.getBitmap(getContentResolver(), FilePathUri);
-                ////
-                ////                // Setting up bitmap selected image into ImageView.
-                ////                Seleetting selected image into Bitmap.
-//                ctImage.setImageBitmap(bitmap);
-
-                // After selecting image change choose button above text.
-                //ChooseButton.setText("Image Selected");
 
             } catch (e: IOException) {
 
