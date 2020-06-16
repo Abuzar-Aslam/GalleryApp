@@ -12,4 +12,6 @@ interface GalleryNavigator {
 
     fun setImages(list: List<ImageModel>)
 
+    fun launchGallery()
+
 }

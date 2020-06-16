@@ -1,15 +1,26 @@
 package com.task.galleryApp.galleryview
 
+import android.Manifest
+import android.app.Activity
 import android.app.ProgressDialog
 import android.content.ContentResolver
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.webkit.MimeTypeMap
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.core.content.ContextCompat
 import androidx.databinding.ObservableBoolean
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.tasks.OnSuccessListener
@@ -36,10 +47,6 @@ class GalleryViewModel(
 
     private var galleryNavigator: GalleryNavigator? = null
     var Storage_Path = "All_Image_Uploads/"
-
-    // Root Database Name for Firebase Database.
-    var Database_Path = "images_uploads"
-
 
     var showLoading = ObservableBoolean(true)
     var FilePathUri: Uri? = null
@@ -135,6 +142,7 @@ class GalleryViewModel(
 
         val postListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
+                list.clear()
                 for (postSnapshot in dataSnapshot.children) {
 
 
@@ -154,7 +162,53 @@ class GalleryViewModel(
                 // ...
             }
         }
-        databaseReference?.addValueEventListener(postListener)
+        databaseReference.addValueEventListener(postListener)
     }
+
+
+     fun selectImage(activity: Activity) {
+        val options =
+            arrayOf<CharSequence>("Take Photo", "Choose from Gallery", "Cancel")
+        val builder = AlertDialog.Builder(activity)
+        builder.setTitle("Add Photo!")
+        builder.setItems(options, DialogInterface.OnClickListener { dialog, item ->
+
+            if (options[item] == "Take Photo") {
+                val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                val f =
+                    File(Environment.getExternalStorageDirectory(), "temp.jpg")
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f))
+                activity.startActivityForResult(intent, 1)
+            } else if (options[item] == "Choose from Gallery") {
+                if (checkWriteStoragePermission(activity)) {
+                    galleryNavigator?.launchGallery()
+                }
+
+            } else if (options[item] == "Cancel") {
+                dialog.dismiss()
+            }
+        })
+        builder.show()
+    }
+
+
+    fun checkWriteStoragePermission(activity: Activity): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            if (ContextCompat.checkSelfPermission(
+                    activity,
+                    Manifest.permission.CAMERA
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    1
+                )
+                return false
+            } else return true
+        }
+        return true
+    }
+
 
 }

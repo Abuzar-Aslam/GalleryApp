@@ -78,35 +78,35 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
     }
 
 
-    private fun selectImage() {
-        val options =
-            arrayOf<CharSequence>("Take Photo", "Choose from Gallery", "Cancel")
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Add Photo!")
-        builder.setItems(options, DialogInterface.OnClickListener { dialog, item ->
-
-            if (options[item] == "Take Photo") {
-                val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                val f =
-                    File(Environment.getExternalStorageDirectory(), "temp.jpg")
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f))
-                startActivityForResult(intent, 1)
-            } else if (options[item] == "Choose from Gallery") {
-                if (checkReadStoragePermission()) {
-                    if (checkWriteStoragePermission()) {
-                        launchGallery()
-                    }
-                }
-
-            } else if (options[item] == "Cancel") {
-                dialog.dismiss()
-            }
-        })
-        builder.show()
-    }
+//    private fun selectImage() {
+//        val options =
+//            arrayOf<CharSequence>("Take Photo", "Choose from Gallery", "Cancel")
+//        val builder = AlertDialog.Builder(this)
+//        builder.setTitle("Add Photo!")
+//        builder.setItems(options, DialogInterface.OnClickListener { dialog, item ->
+//
+//            if (options[item] == "Take Photo") {
+//                val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//                val f =
+//                    File(Environment.getExternalStorageDirectory(), "temp.jpg")
+//                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f))
+//                startActivityForResult(intent, 1)
+//            } else if (options[item] == "Choose from Gallery") {
+//                if (checkReadStoragePermission()) {
+//                    if (checkWriteStoragePermission()) {
+//                        launchGallery()
+//                    }
+//                }
+//
+//            } else if (options[item] == "Cancel") {
+//                dialog.dismiss()
+//            }
+//        })
+//        builder.show()
+//    }
 
     @SuppressLint("IntentReset")
-    fun launchGallery() {
+    override fun launchGallery() {
         val intent = Intent(
             Intent.ACTION_PICK,
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -131,23 +131,6 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
         }
     }
 
-    fun checkWriteStoragePermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    1
-                )
-                return false
-            } else return true
-        }
-        return true
-    }
 
     fun checkReadStoragePermission(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -189,7 +172,7 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
     override fun addImage() {
         Log.d("Abuzar", "In Add Image")
 
-        selectImage()
+        galleryViewModel.selectImage(this)
     }
 
     override fun setImages(list: List<ImageModel>) {
@@ -232,7 +215,7 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    checkWriteStoragePermission()
+                    launchGallery()
                     // permission was granted, yay! Do the
                     // camera-related task you need to do.
                 } else {
