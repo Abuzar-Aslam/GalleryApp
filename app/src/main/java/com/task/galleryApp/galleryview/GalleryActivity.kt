@@ -50,17 +50,13 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
 
     private val galleryViewModel: GalleryViewModel by viewModel()
     // Folder path for Firebase Storage.
-    var Storage_Path = "All_Image_Uploads/"
 
-    // Root Database Name for Firebase Database.
-    var Database_Path = "images_uploads"
     // Creating StorageReference and DatabaseReference object.
     var storageReference: StorageReference? = null
     var databaseReference: DatabaseReference? = null
     val Image_Request_Code = 10
-    var FilePathUri: Uri? = null
     var progressDialog: ProgressDialog? = null
-
+    var Database_Path = "images_uploads"
 
     // Creating RecyclerView.
     lateinit var recyclerView: RecyclerView
@@ -91,45 +87,10 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
         // Setting RecyclerView layout as LinearLayout.
         recyclerView.setLayoutManager(LinearLayoutManager(this));
 
-        fetchImages()
+        galleryViewModel.fetchImages()
     }
 
-    private fun fetchImages() {
 
-        progressDialog = ProgressDialog(this);
-
-        // Setting up message in Progress dialog.
-        progressDialog?.setMessage("Loading Images From Firebase.");
-
-        // Showing progress dialog.
-        progressDialog?.show();
-
-        val postListener = object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                for (postSnapshot in dataSnapshot.children) {
-
-
-                    var imageModel: ImageModel? =
-                        postSnapshot.getValue(ImageModel::class.java) as ImageModel
-
-                    list.add(imageModel!!)
-                }
-
-                adapter = GalleryAdapter(getApplicationContext(), list);
-
-                recyclerView.setAdapter(adapter);
-
-                // Hiding the progress dialog.
-                progressDialog?.dismiss();
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                // Getting Post failed, log a message
-                // ...
-            }
-        }
-        databaseReference?.addValueEventListener(postListener)
-    }
 
     private fun selectImage() {
         val options =
@@ -227,11 +188,12 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
 
         if (requestCode == Image_Request_Code && resultCode == RESULT_OK && data != null && data.getData() != null) {
 
-            FilePathUri = data.getData();
+            galleryViewModel.FilePathUri = data.getData();
 
-            Log.d("Abuzar", "onActivityResult URI " + FilePathUri.toString())
+            Log.d("Abuzar", "onActivityResult URI " + galleryViewModel.FilePathUri.toString())
             try {
-                UploadImageFileToFirebaseStorage();
+                galleryViewModel.uploadImageToFirebase()
+//                UploadImageFileToFirebaseStorage();
                 // Gvar bitmap: Bitmap =
                 ////                    MediaStore.Images.Media.getBitmap(getContentResolver(), FilePathUri);
                 ////
@@ -249,127 +211,19 @@ class GalleryActivity : AppCompatActivity(), GalleryNavigator {
         }
     }
 
-    //    // Creating Method to get the selected image file Extension from File Path URI.
-    fun GetFileExtension(uri: Uri): String? {
-
-        var contentResolver: ContentResolver = getContentResolver();
-
-        var mimeTypeMap: MimeTypeMap = MimeTypeMap.getSingleton();
-
-        // Returning the file Extension.
-        return mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri))
-
-    }
-
     override fun addImage() {
         Log.d("Abuzar", "In Add Image")
 
         selectImage()
     }
 
-    fun UploadImageFileToFirebaseStorage() { // Checking whether FilePathUri Is empty or not.
-        if (FilePathUri != null) { // Setting progressDialog Title.
-            progressDialog = ProgressDialog(this);
-            progressDialog?.setTitle("Image is Uploading...")
-            // Showing progressDialog.
-            progressDialog?.show()
-            // Creating second StorageReference.
-            val storageReference2nd = storageReference!!.child(
-                Storage_Path + System.currentTimeMillis() + "." + GetFileExtension(FilePathUri!!)
-            )
-            val filePath = getPath(FilePathUri!!)
-            if (!filePath.isNullOrEmpty()) {
-                val file = File(filePath)
-                val stream = FileInputStream(file)
+    override fun setImages(list: List<ImageModel>) {
 
+        adapter = GalleryAdapter(getApplicationContext(), list);
 
-                val onSuccessListener = OnSuccessListener<UploadTask.TaskSnapshot> {
-                    val TempImageName = "tempImage"
-
-                    val successListener =
-                        OnSuccessListener<Uri> { uri ->
-                            val imageUploadInfo = ImageModel(TempImageName, uri.toString())
-                            // Getting image upload ID.
-                            val ImageUploadId = databaseReference!!.push().key
-                            // Adding image upload id s child element into databaseReference.
-                            databaseReference!!.child(ImageUploadId!!).setValue(imageUploadInfo)
-                            progressDialog?.dismiss()
-                            // Showing toast message after done uploading.
-                            Toast.makeText(
-                                applicationContext,
-                                "Image Uploaded Successfully ",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    storageReference2nd.downloadUrl.addOnSuccessListener(successListener)
-                }
-
-                // Adding addOnSuccessListener to second StorageReference.
-                storageReference2nd.putStream(stream)
-                    .addOnSuccessListener(onSuccessListener)// If something goes wrong .
-                    .addOnFailureListener { exception ->
-                        // Hiding the progressDialog.
-                        progressDialog?.dismiss()
-                        // Showing exception erro message.
-                        Toast.makeText(this, exception.message, Toast.LENGTH_LONG)
-                            .show()
-                    } // On progress change upload time.
-                    .addOnProgressListener { progressDialog?.setTitle("Image is Uploading...") }
-            } else {
-                progressDialog?.dismiss()
-                Toast.makeText(
-                    this,
-                    "Please Select Image or Add Image Name",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-
-        } else {
-            Toast.makeText(
-                this,
-                "Please Select Image or Add Image Name",
-                Toast.LENGTH_LONG
-            ).show()
-        }
+        recyclerView.setAdapter(adapter);
     }
 
-
-    fun getPath(uri: Uri): String? {
-        // just some safety built in
-        if (uri == null) {
-            Log.d("Abuzar", "URI is null")
-            return null
-        }
-        // try to retrieve the image from the media store first
-        // this will only work for images selected from gallery
-        var projection = arrayOf(MediaStore.Images.Media.DATA)
-        var cursor: Cursor? = contentResolver.query(uri, projection, null, null, null);
-        if (cursor != null) {
-            var column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            var path = cursor.getString(column_index);
-            cursor.close();
-            Log.d("Abuzar", "Path is .. " + path)
-            return path;
-        }
-        Log.d("Abuzar", "Path is .. " + uri.getPath())
-        // this is our fallback here
-        return uri.getPath();
-    }
-
-
-    fun getSourceStream(): FileInputStream {
-        var out: FileInputStream? = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            var parcelFileDescriptor: ParcelFileDescriptor? =
-                getContentResolver().openFileDescriptor(FilePathUri!!, "r");
-            var fileDescriptor: FileDescriptor? = parcelFileDescriptor?.getFileDescriptor();
-            out = FileInputStream(fileDescriptor)
-        } else {
-            out = getContentResolver()?.openInputStream(FilePathUri!!) as FileInputStream
-        }
-        return out;
-    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
